@@ -1,0 +1,19 @@
+{
+  "name": "word_catch",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.3",
+    "https": "^1.0.0",
+    "iconv": "^2.3.4",
+    "iconv-lite": "^0.4.24",
+    "mysql2": "^1.6.5",
+    "sequelize": "^5.2.15"
+  }
+}

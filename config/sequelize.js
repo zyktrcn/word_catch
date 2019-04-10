@@ -1,10 +1,10 @@
 const Sequelize = require('sequelize')
 
 const SQL_USER = 'root' // 数据库用户账号
-const SQL_PASSWORD = '199456' // 数据库用户密码
+const SQL_PASSWORD = '' // 数据库用户密码
 
 exports.dbConnect = function() {
-  return new Sequelize('word', SQL_USER, SQL_PASSWORD,
+  return new Sequelize('feedme', SQL_USER, SQL_PASSWORD,
     {
       'dialect': 'mysql',
       'dialectOptions': {

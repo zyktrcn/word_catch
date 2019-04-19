@@ -1,3 +1,8 @@
 node_modules
 package-lock.json
 config/sequelize.js
+*.json
+data/primary/.DS_Store
+data/.DS_Store
+.DS_Store
+config/sequelize.js

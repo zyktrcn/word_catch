@@ -1,6 +1,7 @@
 const cheerio = require('cheerio')
 const https = require('https')
 const iconv = require('iconv-lite')
+const fs = require('fs')
 
 const Book = require('./models/index').Book
 const Word = require('./models/index').Word
@@ -113,17 +114,22 @@ async function getWords($, url, parameter) {
     count = Math.ceil(parameter.chapterWordCount / 20) || 1
   }
   console.log(count)
-  let promiseArr = []
-  for (let i=0; i<count; i++) {
-    promiseArr.push(getHttps(handle, `${url}?page=${i+1}`))
-  }
-  let result = await Promise.all(promiseArr)
+  // let promiseArr = []
+  // for (let i=0; i<count; i++) {
+  //   promiseArr.push(getHttps(handle, `${url}?page=${i+1}`))
+  // }
+  // let result = await Promise.all(promiseArr)
   let words = []
   let chapterWords = []
-  for (let i=0; i<result.length; i++) {
-    words = words.concat(result[i][0])
-    chapterWords = chapterWords.concat(result[i][1])
+  for (let i=0; i<count; i++) {
+    let result = await getHttps(handle, `${url}?page=${i+1}`)
+    words = words.concat(result[0])
+    chapterWords = chapterWords.concat(result[1])
   }
+  // for (let i=0; i<result.length; i++) {
+  //   words = words.concat(result[i][0])
+  //   chapterWords = chapterWords.concat(result[i][1])
+  // }
   return [words, chapterWords]
 }
 
@@ -134,35 +140,69 @@ function stringHandle(str) {
   return str.replace(/\ +/g,"").replace(/[\r\n]/g,"")
 }
 
+function sleep(delay) {
+  let start = (new Date()).getTime()
+  while ((new Date()).getTime() - start < delay) {
+    continue
+  }
+}
+
+function writeContent(file, book, params) {
+  let content = {}
+  content.book = book
+  content.words = params
+  let str = JSON.stringify(content)
+  fs.writeFile(file, str, function(err) {
+    if (err) {
+      return console.log(err)
+    }
+
+    console.log('===success to write===')
+  })
+}
+
 async function run() {
   console.log('=====start=====')
-  const urls = await getHttps(getBookUrls, 'https://www.shanbay.com/wordbook/category/103/')
+  const urls = await getHttps(getBookUrls, 'https://www.shanbay.com/wordbook/category/10/')
   let books = []
-  let words = []
-  for (let i=0; i<urls.length; i++) {
+  for (let i=163; i<urls.length; i++) {
+    sleep(3000)
+    let dataFile = `./data/master/master-${i}.json`
+    let words = []
     let result = await getHttps(getBook, urls[i])
     let chapterUrls =  result[1]
     let chapterWordCount = result[2]
-    let chapterWords = ''
+    let chapterWords = []
     for (let j=0; j<chapterUrls.length; j++) {
+      sleep(1000)
       let chapterResult = await getHttps(getWords, chapterUrls[j], { wordCount: result[0].word_count, chapterWordCount: chapterWordCount[j]})
       words = words.concat(chapterResult[0])
-      if (j === 0) {
-        chapterWords += chapterResult[1].join(',')
-      } else {
-        chapterWords += ('////' + chapterResult[1].join(','))
-      }
+      // if (j === 0) {
+      //   chapterWords += chapterResult[1].join(',')
+      // } else {
+      //   chapterWords += ('////' + chapterResult[1].join(','))
+      // }
+      chapterWords.push({ chapter: j+1, content: chapterResult[1] })
     }
     books[i] = result[0]
-    books[i].content = chapterWords
-    Book.create(books[i])
+    // books[i].content = chapterWords
+    books[i].content = dataFile
+    await Book.create(books[i])
+
+    writeContent(dataFile, books[i].name, chapterWords)
+
+    const book = await Book.findOne({ where: books[i] })
+
+    for (let k=0; k<words.length; k++) {
+      words[k]['book_id'] = book.id
+      await Word.create(words[k])
+    }
   }
 
-  for (let i=0; i<words.length; i++) {
-    Word.create(words[i])
-  }
+  // for (let i=0; i<words.length; i++) {
+  //   await Word.create(words[i])
+  // }
 
-  console.log(books)
 
   console.log('=====finish=====')
 }

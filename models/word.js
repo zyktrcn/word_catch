@@ -1,7 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
 
   return sequelize.define('word', {
-    'name': DataTypes.STRING(50),
+    'name': DataTypes.STRING(80),
     'content': DataTypes.STRING(250),
     'book_id': DataTypes.INTEGER,
     'appear_times': DataTypes.INTEGER,
